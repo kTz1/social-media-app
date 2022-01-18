@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, Navigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 // Icons
 import { MdDownloadForOffline } from 'react-icons/md';
@@ -7,34 +7,41 @@ import { AiTwotoneDelete } from 'react-icons/ai';
 import { BsFillArrowUpRightCircleFill } from 'react-icons/bs';
 // Data
 import { client, urlFor } from '../client';
-import { fetchUser } from '../utils/fetchUser';
 
 
-const Pin = ({ pin: { postedBy, image, _id, destination, save }}) => {
+const Pin = ({ pin }) => {
     const [postHovered, setPostHovered] = useState(false);
-    const navigate = useNavigate();
-    const user = fetchUser();
+    const [savingPost, setSavingPost] = useState(false);
 
-    const alreadySaved = !!(save?.filter((item) => item.postedBy._id === user.googleId))?.length;  
+    const navigate = useNavigate();
+
+    const { postedBy, image, _id, destination } = pin;
+
+    const user = localStorage.getItem('user') !== 'undefined' ? JSON.parse(localStorage.getItem('user')) : localStorage.clear();  
+
+    let alreadySaved = pin?.save?.filter((item) => item?.postedBy?._id === user?.googleId);
+    alreadySaved = alreadySaved?.length > 0 ? alreadySaved : [];
 
     const savePin = (id) => {
-        if(!alreadySaved) {
+        if(alreadySaved?.length === 0) {
+            setSavingPost(true);
 
             client
                 .patch(id)
                 .setIfMissing({ save: [] })
                 .insert('after', 'save[-1]', [{
                     _key: uuidv4(),
-                    userId: user.googleId,
+                    userId: user?.googleId,
                     postedBy: {
                         _type: 'postedBy',
-                        _ref: user.googleId
+                        _ref: user?.googleId
                     }
                 }])
                 .commit()
                 .then(() => {
                     window.location.reload();
-                })
+                    setSavingPost(false);
+                });
         }
     };
 
@@ -44,7 +51,7 @@ const Pin = ({ pin: { postedBy, image, _id, destination, save }}) => {
             .then(() => {
                 window.location.reload();
             })
-    }
+    };
 
     return (
         <div className="p-2">
@@ -54,7 +61,7 @@ const Pin = ({ pin: { postedBy, image, _id, destination, save }}) => {
                 onClick={() => navigate(`/pin-detail/${_id}`)}
                 className="relative cursor-zoom-in w-auto hover:shadow-lg rounded-lg overflow-hidden transition-all duration-500 ease-in-out"
             >
-                <img className="rounded-lg w-full" alt="user-post" src={urlFor(image).width(250).url()} />
+                <img className="rounded-lg w-full" alt="user-post" src={(urlFor(image).width(250).url())} />
                 {postHovered && (
                     <div
                         className="absolute top-0 w-full h-full flex flex-col justify-between p-1 pr-2 pt-2 pb-2 z-50"
@@ -71,9 +78,9 @@ const Pin = ({ pin: { postedBy, image, _id, destination, save }}) => {
                                     <MdDownloadForOffline />
                                 </a>
                             </div>
-                            {alreadySaved ? (
+                            {alreadySaved?.length !== 0 ? (
                                 <button type="button" className="bg-red-500 opacity-70 hover:opacity-100 text-white font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outlined-none">
-                                    {save?.length} Saved
+                                    {pin?.save?.length} Saved
                                 </button>
                             ) : (
                                 <button 
@@ -84,22 +91,25 @@ const Pin = ({ pin: { postedBy, image, _id, destination, save }}) => {
                                     type="button" 
                                     className="bg-red-500 opacity-70 hover:opacity-100 text-white font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outlined-none"
                                 >
-                                    Save
+                                    {pin?.save?.length} 
+                                    {savingPost ? 'Saving' : 'Save'}
                                 </button>
                             )}
                         </div>
                         <div className="flex justify-between items-center gap-2 w-full">
-                            {destination && (
+                            {destination?.slice(8).length > 0 ? (
                                 <a
                                     href={destination}
                                     target="_blank"
-                                    rel="noreferre"
+                                    rel="noreferrer"
                                     className="bg-white flex items-center gap-2 text-black font-bold p-2 pl-4 pr-4 rounded-full opacity-70 hover:100 hover:shodow-md"
-                                >
+                                >   
+                                    {' '}
                                     <BsFillArrowUpRightCircleFill />
-                                    {destination.length > 20 ? destination.slice(8, 20) : destination.slice(8)}
+                                    {destination?.slice(8, 17)}...
                                 </a>
-                            )}
+                            ) : undefined}
+
                             {postedBy?._id === user?.googleId && (
                                 <button
                                     type="button"
@@ -110,14 +120,13 @@ const Pin = ({ pin: { postedBy, image, _id, destination, save }}) => {
                                     className="bg-white p-2 rounded-full w-8 h-8 flex items-center justify-center text-dark opacity-75 hover:opacity-100 outline-none"
                                 >
                                     <AiTwotoneDelete />
-                                    <p>aici e butonul</p>
                                 </button>
                             )}
                         </div>
                     </div>
                 )}
             </div>
-            <Link to={`user-profile/${postedBy?._id}`} className="flex gap-2 mt-2 items-center">
+            <Link to={`/user-profile/${postedBy?._id}`} className="flex gap-2 mt-2 items-center">
                 <img  
                     className="w-8 h-8 rounded-full object-cover"
                     src={postedBy?.image}
@@ -126,7 +135,7 @@ const Pin = ({ pin: { postedBy, image, _id, destination, save }}) => {
                 <p className="font-semibold capitalize">{postedBy?.userName}</p>
             </Link>
         </div>
-    )
-}
+    );
+};
 
-export default Pin
+export default Pin;
