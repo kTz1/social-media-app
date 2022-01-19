@@ -1,7 +1,7 @@
 import React, {useState, useRef, useEffect } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
 // Icons
-import { HiMenu, HiLink } from 'react-icons/hi';
+import { HiMenu } from 'react-icons/hi';
 import { AiFillCloseCircle } from 'react-icons/ai'
 // Components
 import { Sidebar, UserProfile } from '../components';
@@ -31,7 +31,7 @@ const Home = () => {
 
     useEffect(() => {
         scrollRef.current.scrollTo(0, 0)
-    }, [])
+    })
 
     return (
         <div className="flex bg-gray-50 md:flex-row flex-col h-screen transaction-height duration-75 ease-out">
@@ -40,7 +40,7 @@ const Home = () => {
             </div>
             <div className="flex md:hidden flex-row">
                 <div className="=-2 w-full flex flex-row justify-between items-center shadow-md">
-                    <HiMenu fontSize={40} className="cursor-poiter" onClick={() => setToggleSidebar(true)} />
+                    <HiMenu fontSize={40} className="cursor-pointer" onClick={() => setToggleSidebar(true)} />
                     <Link to="/">
                         <img src={logo} alt="logo" className="w-28" />
                     </Link>
